@@ -13,14 +13,19 @@ def main():
     )
     args = parser.parse_args()
 
+    # Resolve the absolute path for the config file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path_abs = os.path.join(script_dir, "..", args.config)
+    config_path_abs = os.path.normpath(config_path_abs)
+
     # Ensure the config directory exists
-    config_dir = os.path.dirname(args.config)
-    if config_dir and not os.path.exists(config_dir):
+    config_dir = os.path.dirname(config_path_abs)
+    if not os.path.exists(config_dir):
         os.makedirs(config_dir)
 
     # Check if config.json exists, if not, create a dummy one
-    if not os.path.exists(args.config):
-        print(f"Configuration file not found at {args.config}. Creating a dummy one.")
+    if not os.path.exists(config_path_abs):
+        print(f"Configuration file not found at {config_path_abs}. Creating a dummy one.")
         dummy_config = {
             "excel_file_path": "portfolio.xlsx",
             "excel_positions_sheet_name": "Posicoes",
@@ -32,13 +37,13 @@ def main():
             "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN", # Placeholder
             "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID" # Placeholder
         }
-        with open(args.config, 'w') as f:
+        with open(config_path_abs, 'w') as f:
             json.dump(dummy_config, f, indent=4)
-        print(f"A dummy config.json has been created at {args.config}. Please update it with your actual details.")
+        print(f"A dummy config.json has been created at {config_path_abs}. Please update it with your actual details.")
         return # Exit after creating dummy config, user needs to fill it
 
     try:
-        updater = PortfolioUpdater(config_path=args.config)
+        updater = PortfolioUpdater(config_path=config_path_abs)
         updater.run_update()
     except FileNotFoundError as e:
         print(f"Configuration error: {e}. Please ensure config.json and credentials.json are correctly set up.")
