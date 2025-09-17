@@ -1,0 +1,49 @@
+Preciso que você me ajude a criar um sistema de automação para gerenciar minha carteira de investimentos. O sistema deve ser capaz de:
+
+1.  **Coletar dados de diversas fontes:**
+    *   Preços de ativos (ações, FIIs, etc.) do Yahoo Finance (yfinance).
+    *   Informações e relatórios de casas de análise como Nord Research e Levante Ideias de Investimento (via web scraping, se necessário).
+    *   Dados de transações e posições atuais de uma planilha Excel local.
+
+2.  **Processar e analisar os dados:**
+    *   Consolidar todos os dados coletados.
+    *   Calcular métricas de desempenho da carteira (ROI, volatilidade, etc.).
+    *   Comparar o desempenho da carteira com benchmarks.
+    *   Identificar oportunidades de rebalanceamento ou ajustes na estratégia.
+
+3.  **Atualizar automaticamente uma planilha no Google Sheets:**
+    *   Manter uma planilha mestra no Google Sheets com as informações mais recentes da carteira (posições, preços, desempenho).
+    *   Permitir que eu visualize e acompanhe a carteira em tempo real.
+
+4.  **Enviar notificações via Telegram:**
+    *   Alertas sobre mudanças significativas no mercado ou na carteira.
+    *   Resumos diários/semanais do desempenho da carteira.
+    *   Sugestões de ações com base na análise.
+
+**Estrutura do Projeto:**
+
+Sugiro uma estrutura modular, com componentes separados para:
+
+*   **Coordenador de Dados:** Orquestra a coleta e o processamento.
+*   **Conectores de Dados:** Módulos específicos para cada fonte (yfinance, Nord, Levante, Excel).
+*   **Analisador de Investimentos:** Lógica para cálculo de métricas e identificação de oportunidades.
+*   **Atualizador de Google Sheets:** Interação com a API do Google Sheets.
+*   **Conector de Telegram:** Envio de mensagens.
+*   **Gerenciador de Portfólio:** Consolida e gerencia a carteira.
+*   **Módulo Principal:** Orquestra a execução de todo o fluxo.
+
+**Tecnologias:**
+
+*   Python como linguagem principal.
+*   Bibliotecas como Pandas para manipulação de dados.
+*   `yfinance` para dados do Yahoo Finance.
+*   `openpyxl` ou similar para Excel.
+*   `google-auth-oauthlib` e `google-api-python-client` para Google Sheets API.
+*   `python-telegram-bot` para Telegram.
+*   `BeautifulSoup` e `requests` para web scraping (se necessário).
+
+**Objetivo Final:**
+
+Ter um sistema funcional que automatize a atualização e o monitoramento da minha carteira, me fornecendo insights e alertas para tomar decisões mais informadas. O código deve ser limpo, modular e com testes unitários, se possível.
+
+Por favor, comece criando a estrutura básica do projeto e os arquivos principais, e depois me ajude a implementar a lógica em cada módulo. Também preciso de um `requirements.txt` com as dependências necessárias.

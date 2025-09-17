@@ -1,0 +1,9 @@
+pandas
+openpyxl
+yfinance
+gspread
+gspread-dataframe
+requests
+beautifulsoup4
+python-telegram-bot
+
