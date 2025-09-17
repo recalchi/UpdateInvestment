@@ -13,7 +13,7 @@ import json
 from typing import Dict, Any
 
 class PortfolioUpdater:
-    def __init__(self, config_path: str = 'config.json'):
+    def __init__(self, config_path: str = 'config/config.json'):
         self.config = self._load_config(config_path)
 
         self.excel_processor = ExcelProcessor(self.config['excel_file_path'])
@@ -97,42 +97,5 @@ class PortfolioUpdater:
         print("Portfolio update process completed successfully.")
 
 
-if __name__ == '__main__':
-    # Example config.json structure:
-    # {
-    #   "excel_file_path": "portfolio.xlsx",
-    #   "excel_positions_sheet_name": "Posicoes",
-    #   "google_sheets_credentials_path": "path/to/your/credentials.json",
-    #   "google_sheets_spreadsheet_name": "MyInvestmentPortfolio",
-    #   "google_sheets_summary_sheet_name": "Resumo",
-    #   "google_sheets_details_sheet_name": "Detalhes",
-    #   "google_sheets_spreadsheet_url": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit",
-    #   "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
-    #   "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID"
-    # }
 
-    # Create a dummy config.json for demonstration if it doesn't exist
-    if not os.path.exists('config.json'):
-        dummy_config = {
-            "excel_file_path": "portfolio.xlsx",
-            "excel_positions_sheet_name": "Posicoes",
-            "google_sheets_credentials_path": "./credentials.json", # Placeholder
-            "google_sheets_spreadsheet_name": "MyInvestmentPortfolio", # Placeholder
-            "google_sheets_summary_sheet_name": "Resumo",
-            "google_sheets_details_sheet_name": "Detalhes",
-            "google_sheets_spreadsheet_url": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit", # Placeholder
-            "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN", # Placeholder
-            "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID" # Placeholder
-        }
-        with open('config.json', 'w') as f:
-            json.dump(dummy_config, f, indent=4)
-        print("Created a dummy config.json. Please update it with your actual details.")
-
-    try:
-        updater = PortfolioUpdater()
-        updater.run_update()
-    except FileNotFoundError as e:
-        print(f"Configuration error: {e}. Please ensure config.json and credentials.json are correctly set up.")
-    except Exception as e:
-        print(f"An unexpected error occurred during the update process: {e}")
 
