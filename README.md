@@ -51,21 +51,21 @@ O projeto está organizado da seguinte forma:
     pip install -r requirements.txt
     ```
 
-2.  **Configure o `config.json`:**
+2.  **Configure o `config/config.json`:**
 
-    O arquivo `config/config.json` contém as configurações necessárias para a execução da automação. Preencha os campos com suas credenciais e IDs:
+    O arquivo `config/config.json` contém as configurações necessárias para a execução da automação. Se ele não existir, será criado um arquivo de exemplo ao executar `python src/main.py`. Preencha os campos com suas credenciais e IDs:
 
     ```json
     {
         "excel_file_path": "caminho/para/seu/arquivo.xlsx",
-        "google_sheets": {
-            "credentials_path": "caminho/para/suas/credenciais.json",
-            "spreadsheet_id": "ID_DA_SUA_PLANILHA"
-        },
-        "telegram": {
-            "bot_token": "SEU_TOKEN_DE_BOT",
-            "chat_id": "SEU_CHAT_ID"
-        },
+        "excel_positions_sheet_name": "Posicoes",
+        "google_sheets_credentials_path": "caminho/para/suas/credenciais.json",
+        "google_sheets_spreadsheet_name": "MyInvestmentPortfolio",
+        "google_sheets_summary_sheet_name": "Resumo",
+        "google_sheets_details_sheet_name": "Detalhes",
+        "google_sheets_spreadsheet_url": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit",
+        "telegram_bot_token": "SEU_TOKEN_DE_BOT",
+        "telegram_chat_id": "SEU_CHAT_ID",
         "web_scraping": {
             "nord_url": "https://www.nordresearch.com.br/analises/",
             "levante_url": "https://www.levanteideias.com.br/analises/"
@@ -82,6 +82,31 @@ O projeto está organizado da seguinte forma:
     ```bash
     python src/main.py
     ```
+
+## Fluxo de Atualização da Carteira (Passo a Passo)
+
+O processo de atualização da carteira de investimentos segue os seguintes passos, orquestrados pelo `PortfolioUpdater` em `src/update_portfolio.py`:
+
+1.  **Carregamento das Posições da Carteira:**
+    *   O `DataCoordinator` utiliza o `ExcelProcessor` para ler as posições atuais da sua carteira de um arquivo Excel (`excel_file_path` e `excel_positions_sheet_name` configurados no `config.json`).
+    *   As posições são então carregadas no `PortfolioManager`.
+
+2.  **Coleta de Preços Atuais:**
+    *   Os tickers dos ativos da sua carteira são extraídos.
+    *   O `DataCoordinator` utiliza o `YFinanceConnector` para buscar os preços mais recentes desses ativos no Yahoo Finance.
+    *   Caso não seja possível obter os preços mais recentes, o sistema tentará usar os preços existentes como fallback, emitindo um aviso.
+    *   Os preços atualizados são então repassados ao `PortfolioManager`.
+
+3.  **Cálculo de Valores e Resumo da Carteira:**
+    *   O `PortfolioManager` calcula o valor atual de cada posição e o valor total da carteira com base nos preços mais recentes.
+    *   O `InvestmentAnalyzer` gera um resumo da carteira, incluindo métricas como valor total atual, total investido, lucro/prejuízo e ROI percentual.
+
+4.  **Atualização do Google Sheets:**
+    *   O `GoogleSheetsUpdater` é utilizado para enviar os dados atualizados da carteira para uma planilha específica no Google Sheets.
+    *   São atualizadas duas planilhas: uma com o resumo geral (`google_sheets_summary_sheet_name`) e outra com os detalhes de cada posição (`google_sheets_details_sheet_name`).
+
+5.  **Envio de Notificação via Telegram:**
+    *   O `TelegramConnector` envia uma mensagem para um chat do Telegram (configurado no `config.json`) com um resumo da atualização da carteira, incluindo os principais indicadores e um link para a planilha do Google Sheets.
 
 ## Testes
 
