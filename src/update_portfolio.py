@@ -10,6 +10,7 @@ from google_sheets_updater import GoogleSheetsUpdater
 from telegram_connector import TelegramConnector
 import os
 import json
+from typing import Dict, Any
 
 class PortfolioUpdater:
     def __init__(self, config_path: str = 'config.json'):
