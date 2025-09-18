@@ -29,7 +29,7 @@ def main():
         dummy_config = {
             "excel_file_path": "portfolio.xlsx",
             "excel_positions_sheet_name": "Posicoes",
-            "google_sheets_credentials_path": "./credentials.json", # Placeholder
+
             "google_sheets_spreadsheet_name": "MyInvestmentPortfolio", # Placeholder
             "google_sheets_summary_sheet_name": "Resumo",
             "google_sheets_details_sheet_name": "Detalhes",

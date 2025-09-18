@@ -15,10 +15,17 @@ class ExcelProcessor:
                 return pd.DataFrame()
             
             # Use pandas to read the Excel file, which is generally more robust
-            # for inferring headers and data types. By default, it uses the first row as headers.
-            df = pd.read_excel(self.file_path, sheet_name=sheet_name, engine='openpyxl')
-            return df
-        except ValueError: # Handles cases where the sheet does not exist
+            # for inferring headers and data types. By default, it uses the first row as headers.            df = pd.read_excel(self.file_path, sheet_name=sheet_name, engine=\'openpyxl\')
+            
+            # Adicionar a coluna RENTABILIDADE_ULT_MES se não existir
+            if 'RENTABILIDADE_ULT_MES' not in df.columns:
+                df['RENTABILIDADE_ULT_MES'] = 0.0  # Valor padrão
+
+            # Adicionar a coluna DATA ATT se não existir
+            if 'DATA ATT' not in df.columns:
+                df['DATA ATT'] = pd.to_datetime('today').strftime('%Y-%m-%d')
+
+            return df        except ValueError: # Handles cases where the sheet does not exist
             return pd.DataFrame()
         except Exception as e:
             print(f"Erro inesperado ao ler a planilha '{sheet_name}': {e}")
@@ -65,4 +72,15 @@ class ExcelProcessor:
 
         except Exception as e:
             print(f"Erro ao atualizar o intervalo da planilha '{sheet_name}': {e}")
+
+
+
+    def create_historical_sheet(self, df: pd.DataFrame):
+        try:
+            today_str = pd.to_datetime("today").strftime("%Y%m%d")
+            sheet_name = f"base{today_str}"
+            self.write_sheet(df, sheet_name)
+            print(f"Aba histórica \'{sheet_name}\' criada com sucesso.")
+        except Exception as e:
+            print(f"Erro ao criar aba histórica: {e}")
 

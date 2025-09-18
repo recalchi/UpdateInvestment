@@ -6,8 +6,7 @@ from nord_connector import NordConnector
 from levante_connector import LevanteConnector
 from investment_analyzer import InvestmentAnalyzer
 from portfolio_manager import PortfolioManager
-from google_sheets_updater import GoogleSheetsUpdater
-from telegram_connector import TelegramConnector
+
 import os
 import json
 from typing import Dict, Any
@@ -25,8 +24,7 @@ class PortfolioUpdater:
         self.yfinance_connector = YFinanceConnector()
         self.nord_connector = NordConnector()
         self.levante_connector = LevanteConnector()
-        self.google_sheets_updater = GoogleSheetsUpdater(self.config['google_sheets_credentials_path'])
-        self.telegram_connector = TelegramConnector(self.config['telegram_bot_token'], self.config['telegram_chat_id'])
+
 
         # Register data sources with the coordinator
         self.data_coordinator.register_source('yfinance', self.yfinance_connector)
@@ -69,30 +67,16 @@ class PortfolioUpdater:
         portfolio_summary = self.investment_analyzer.get_portfolio_summary(portfolio_data_with_values)
         print("Portfolio values and summary calculated.")
 
-        # 4. Update Google Sheets
-        print("Updating Google Sheets...")
-        spreadsheet_name = self.config['google_sheets_spreadsheet_name']
-        summary_sheet = self.config['google_sheets_summary_sheet_name']
-        details_sheet = self.config['google_sheets_details_sheet_name']
+        # Atualizar DATA ATT na planilha principal
+        positions_df["DATA ATT"] = pd.to_datetime("today").strftime("%Y-%m-%d")
+        self.excel_processor.write_sheet(positions_df, self.config["excel_positions_sheet_name"])
+        print("DATA ATT atualizada na planilha principal.")
 
-        # Prepare summary for Google Sheets
-        summary_df = pd.DataFrame([portfolio_summary])
-        self.google_sheets_updater.write_data(summary_df, spreadsheet_name, summary_sheet, clear_existing=True)
-        self.google_sheets_updater.write_data(portfolio_data_with_values, spreadsheet_name, details_sheet, clear_existing=True)
-        print("Google Sheets updated.")
+        # Criar aba histórica
+        self.excel_processor.create_historical_sheet(portfolio_data_with_values)
+        print("Aba histórica criada.")
 
-        # 5. Send Telegram Notification
-        print("Sending Telegram notification...")
-        message = (
-            f"*Atualização da Carteira de Investimentos*\n\n"
-            f"*Valor Total Atual:* R$ {portfolio_summary.get('TotalValorAtual', 0.0):.2f}\n"
-            f"*Total Investido:* R$ {portfolio_summary.get('TotalValorInvestido', 0.0):.2f}\n"
-            f"*Lucro/Prejuízo:* R$ {portfolio_summary.get('LucroPrejuizo_Total', 0.0):.2f}\n"
-            f"*ROI Percentual:* {portfolio_summary.get('ROI_Percentual_Total', 0.0):.2f}%\n\n"
-            f"_Verifique a planilha para detalhes: {self.config['google_sheets_spreadsheet_url']}_"
-        )
-        self.telegram_connector.send_message(message)
-        print("Telegram notification sent.")
+
 
         print("Portfolio update process completed successfully.")
 
