@@ -2,12 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from typing import List, Dict, Any
+import re
 
 class LevanteConnector:
-    def __init__(self, base_url: str = "https://www.levante.com.br"): # This URL might need adjustment based on actual content structure
+    def __init__(self, base_url: str = "https://www.levanteideias.com.br"): # Base URL para os relatórios
         self.base_url = base_url
         self.session = requests.Session()
-        # Potentially add headers to mimic a browser
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
@@ -22,88 +22,87 @@ class LevanteConnector:
             print(f"Error fetching URL {url}: {e}")
             return None
 
-    def fetch_latest_reports(self, search_term: str = None, num_reports: int = 5) -> pd.DataFrame:
-        """Fetches a list of the latest reports or articles from Levante.
-           This is a generic example and will likely need customization based on Levante's actual website structure.
-        :param search_term: Optional term to filter reports.
-        :param num_reports: Number of reports to try and fetch.
-        :return: DataFrame with report titles, links, and potentially dates.
-        """
-        reports_data = []
-        # This URL is a placeholder. You'll need to find the actual URL for reports/articles.
-        # Example: a blog page, a news section, or a search results page.
-        search_url = f"{self.base_url}/analises-e-relatorios" # Example path, verify on actual site
-        if search_term:
-            # This part is highly dependent on how Levante implements search or filtering
-            # For simplicity, we'll just fetch the main reports page and filter locally.
-            print(f"Searching for reports related to \'{search_term}\' on {search_url}")
-        else:
-            print(f"Fetching latest reports from {search_url}")
+    def _download_csv(self, url: str, filename: str) -> str:
+        """Downloads a CSV file from a given URL."""
+        try:
+            response = self.session.get(url, stream=True, timeout=10)
+            response.raise_for_status()
+            with open(filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            print(f"CSV baixado para: {filename}")
+            return filename
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading CSV from {url}: {e}")
+            return None
 
-        soup = self._get_page_content(search_url)
+    def fetch_report_data_from_url(self, report_url: str) -> pd.DataFrame:
+        """Fetches data from a specific report URL, trying to find CSV downloads or tables."""
+        print(f"Acessando relatório em: {report_url}")
+        soup = self._get_page_content(report_url)
         if not soup:
             return pd.DataFrame()
 
-        # This is a generic selector. You will need to inspect Levante's website HTML
-        # to find the correct CSS selectors for report titles, links, and dates.
-        # Example: articles might be within <div class="report-item"> or <article> tags.
-        # Look for elements that contain the title and a link.
-        report_elements = soup.find_all('a', class_='report-link') # Placeholder class
-        if not report_elements:
-            report_elements = soup.find_all('h2', class_='entry-title') # Another common pattern
-            if report_elements:
-                print("Found potential report titles, trying to extract links from parents.")
-                report_elements = [h2.find_parent('a') for h2 in report_elements if h2.find_parent('a')]
-
-        for i, element in enumerate(report_elements):
-            if len(reports_data) >= num_reports:
-                break
+        # 1. Tentar encontrar links de download de CSV
+        csv_links = soup.find_all('a', href=re.compile(r'.*\.csv$'))
+        if csv_links:
+            print(f"Encontrado(s) {len(csv_links)} link(s) de CSV na página.")
+            # Por simplicidade, vamos tentar baixar o primeiro CSV encontrado
+            csv_url = csv_links[0]['href']
+            if not csv_url.startswith('http'):
+                csv_url = self.base_url + csv_url # Ajustar para URL absoluta
             
-            title = element.get_text(strip=True) if element else 'N/A'
-            link = element['href'] if element and element.has_attr('href') else 'N/A'
-            
-            # Ensure link is absolute
-            if link and not link.startswith('http'):
-                link = self.base_url + link
+            filename = f"levante_report_{report_url.split('/')[-1].replace('-', '_')}.csv"
+            downloaded_file = self._download_csv(csv_url, filename)
+            if downloaded_file:
+                try:
+                    df = pd.read_csv(downloaded_file)
+                    print(f"Dados lidos do CSV: {downloaded_file}")
+                    return df
+                except Exception as e:
+                    print(f"Erro ao ler CSV {downloaded_file}: {e}")
 
-            # Basic filtering by search_term (case-insensitive)
-            if search_term and search_term.lower() not in title.lower():
-                continue
+        # 2. Se não houver CSV, tentar extrair dados de tabelas HTML
+        tables = soup.find_all('table')
+        if tables:
+            print(f"Encontrado(s) {len(tables)} tabela(s) na página.")
+            # Por simplicidade, vamos tentar ler a primeira tabela como DataFrame
+            try:
+                df = pd.read_html(str(tables[0]))[0]
+                print("Dados extraídos da primeira tabela HTML.")
+                return df
+            except Exception as e:
+                print(f"Erro ao ler tabela HTML: {e}")
 
-            reports_data.append({
-                'Source': 'Levante',
-                'Title': title,
-                'Link': link,
-                'Date': 'N/A' # Date extraction would require more specific parsing
-            })
-        
-        if not reports_data:
-            print(f"No reports found or selectors need adjustment for {search_url}")
+        print(f"Nenhum CSV ou tabela de dados encontrado em {report_url}.")
+        return pd.DataFrame()
 
-        return pd.DataFrame(reports_data)
-
-    def fetch_data(self, query: str = None, num_results: int = 5) -> pd.DataFrame:
-        """Generic fetch data method to be used by DataCoordinator."""
-        return self.fetch_latest_reports(search_term=query, num_reports=num_results)
+    def fetch_data(self, urls: List[str]) -> Dict[str, pd.DataFrame]:
+        """Fetches data from a list of specific report URLs."""
+        all_data = {}
+        for url in urls:
+            df = self.fetch_report_data_from_url(url)
+            if not df.empty:
+                all_data[url] = df
+        return all_data
 
 
 if __name__ == '__main__':
-    # Example Usage
     levante = LevanteConnector()
-    print("\nFetching latest reports from Levante:")
-    latest_reports = levante.fetch_latest_reports(num_reports=3)
-    print(latest_reports)
+    # Exemplo de URL de relatório da Levante (substitua por URLs reais)
+    report_urls = [
+        "https://www.levanteideias.com.br/relatorio-exemplo-1", # Substitua por URLs reais
+        "https://www.levanteideias.com.br/relatorio-exemplo-2"
+    ]
 
-    print("\nFetching reports about 'PETR4' from Levante:")
-    petr4_reports = levante.fetch_latest_reports(search_term='PETR4', num_reports=2)
-    print(petr4_reports)
+    print("\nTentando buscar dados dos relatórios da Levante Ideias:")
+    data_from_reports = levante.fetch_data(report_urls)
 
-    print("\nFetching reports about 'Bolsa' from Levante:")
-    bolsa_reports = levante.fetch_latest_reports(search_term='Bolsa', num_reports=5)
-    print(bolsa_reports)
+    for url, df in data_from_reports.items():
+        print(f"\nDados do relatório {url}:")
+        print(df.head())
 
-    # Note: This connector is highly dependent on the actual HTML structure of Levante's website.
-    # The current CSS selectors are placeholders and will likely need to be updated after inspecting the site.
-    # To inspect: Right-click on a report title on Levante's website -> Inspect Element.
-    # Look for unique classes or IDs that contain the report title and its link.
+    if not data_from_reports:
+        print("Nenhum dado foi coletado dos relatórios da Levante Ideias.")
+
 

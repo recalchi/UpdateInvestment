@@ -1,11 +1,13 @@
 {
   "excel_file_path": "portfolio.xlsx",
   "excel_positions_sheet_name": "Posicoes",
-  "google_sheets_credentials_path": "./credentials.json",
-  "google_sheets_spreadsheet_name": "MyInvestmentPortfolio",
-  "google_sheets_summary_sheet_name": "Resumo",
-  "google_sheets_details_sheet_name": "Detalhes",
-  "google_sheets_spreadsheet_url": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit",
-  "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
-  "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID"
+  "nord_report_urls": {
+    "dividendos": "https://members.nordinvestimentos.com.br/conteudo/41-dividendos-o-que-comprar-",
+    "fundos_imobiliarios": "https://members.nordinvestimentos.com.br/conteudo/121-fundos-imobiliarios",
+    "global": "https://members.nordinvestimentos.com.br/conteudo/112-global",
+    "investidor_de_valor": "https://members.nordinvestimentos.com.br/conteudo/5-o-investidor-de-valor",
+    "renda_fixa_pro": "https://members.nordinvestimentos.com.br/conteudo/7-renda-fixa-pro"
+  }
 }
+
+

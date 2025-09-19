@@ -3,7 +3,7 @@ from data_coordinator import DataCoordinator
 from excel_processor import ExcelProcessor
 from yfinance_connector import YFinanceConnector
 from nord_connector import NordConnector
-from levante_connector import LevanteConnector
+from levante_connector import LevanteConnector # Importar LevanteConnector
 from investment_analyzer import InvestmentAnalyzer
 from portfolio_manager import PortfolioManager
 
@@ -23,13 +23,12 @@ class PortfolioUpdater:
         # Initialize connectors
         self.yfinance_connector = YFinanceConnector()
         self.nord_connector = NordConnector()
-        self.levante_connector = LevanteConnector()
-
+        self.levante_connector = LevanteConnector() # Inicializar LevanteConnector
 
         # Register data sources with the coordinator
         self.data_coordinator.register_source('yfinance', self.yfinance_connector)
         self.data_coordinator.register_source('nord', self.nord_connector)
-        self.data_coordinator.register_source('levante', self.levante_connector)
+        self.data_coordinator.register_source('levante', self.levante_connector) # Registrar LevanteConnector
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         if not os.path.exists(config_path):
@@ -60,7 +59,27 @@ class PortfolioUpdater:
             self.portfolio_manager.update_prices(latest_prices)
             print("Latest prices updated.")
 
-        # 3. Calculate current portfolio values and summary
+        # 3. Collect data from Nord Research reports
+        print("Collecting data from Nord Research reports...")
+        nord_report_urls = list(self.config.get('nord_report_urls', {}).values())
+        if nord_report_urls:
+            nord_data = self.data_coordinator.collect_data('nord', urls=nord_report_urls)
+            if nord_data:
+                print(f"Collected data from {len(nord_data)} Nord Research reports.")
+                # Aqui você precisará adicionar a lógica para processar os DataFrames retornados
+                # pelo NordConnector e integrá-los à sua planilha ou análise.
+                # Por exemplo, você pode consolidar todos os DataFrames em um único:
+                # consolidated_nord_df = pd.concat(nord_data.values(), ignore_index=True)
+                # E então usar consolidated_nord_df para atualizar sua planilha ou fazer análises.
+                # Por enquanto, apenas imprimimos as chaves para verificar que os dados foram coletados.
+                for url, df in nord_data.items():
+                    print(f"  - Report {url} with {len(df)} rows.")
+            else:
+                print("No data collected from Nord Research reports.")
+        else:
+            print("No Nord Research report URLs configured.")
+
+        # 4. Calculate current portfolio values and summary
         print("Calculating portfolio values and summary...")
         self.portfolio_manager.calculate_current_value()
         portfolio_data_with_values = self.portfolio_manager.get_portfolio_data()
@@ -76,10 +95,13 @@ class PortfolioUpdater:
         self.excel_processor.create_historical_sheet(portfolio_data_with_values)
         print("Aba histórica criada.")
 
-
-
         print("Portfolio update process completed successfully.")
 
 
+
+
+if __name__ == '__main__':
+    updater = PortfolioUpdater()
+    updater.run_update()
 
 
