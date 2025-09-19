@@ -7,6 +7,14 @@
     "global": "https://members.nordinvestimentos.com.br/conteudo/112-global",
     "investidor_de_valor": "https://members.nordinvestimentos.com.br/conteudo/5-o-investidor-de-valor",
     "renda_fixa_pro": "https://members.nordinvestimentos.com.br/conteudo/7-renda-fixa-pro"
+  },
+  "nord_credentials": {
+    "email": "renan.recalchi.adm@gmail.com",
+    "password": "Gordinez123@"
+  },
+  "levante_credentials": {
+    "email": "recalchi.consultoria@gmail.com",
+    "password": "Gordinez123@"
   }
 }
 

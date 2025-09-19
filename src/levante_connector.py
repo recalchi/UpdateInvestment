@@ -5,12 +5,13 @@ from typing import List, Dict, Any
 import re
 
 class LevanteConnector:
-    def __init__(self, base_url: str = "https://www.levanteideias.com.br"): # Base URL para os relatórios
+    def __init__(self, base_url: str = "https://app.levanteideias.com.br"): # Base URL para login
         self.base_url = base_url
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
+        self.is_logged_in = False
 
     def _get_page_content(self, url: str) -> BeautifulSoup:
         """Fetches the content of a given URL and parses it with BeautifulSoup."""
@@ -36,8 +37,55 @@ class LevanteConnector:
             print(f"Error downloading CSV from {url}: {e}")
             return None
 
+    def login(self, email, password):
+        login_url = f"{self.base_url}/users/sign_in"
+        print(f"Tentando fazer login na Levante Ideias em: {login_url}")
+        
+        soup = self._get_page_content(login_url)
+        if not soup:
+            print("Não foi possível carregar a página de login da Levante Ideias.")
+            return False
+
+        # Extract CSRF token and other hidden fields if present
+        auth_token = soup.find('meta', {'name': 'csrf-token'})
+        if auth_token:
+            auth_token = auth_token['content']
+        else:
+            print("CSRF token não encontrado na página de login da Levante.")
+            return False
+
+        form_data = {
+            'user[email]': email,
+            'user[password]': password,
+            'authenticity_token': auth_token, # CSRF token
+            'user[remember_me]': '0', # Or '1' if you want to remember
+            'commit': 'Entrar'
+        }
+
+        try:
+            response = self.session.post(login_url, data=form_data, timeout=10)
+            response.raise_for_status()
+            
+            # Check if login was successful
+            if "users/sign_in" not in response.url: # If not redirected back to login page
+                print("Login na Levante Ideias bem-sucedido!")
+                self.is_logged_in = True
+                return True
+            else:
+                print("Login na Levante Ideias falhou. Verifique as credenciais.")
+                self.is_logged_in = False
+                return False
+        except requests.exceptions.RequestException as e:
+            print(f"Erro durante o login na Levante Ideias: {e}")
+            self.is_logged_in = False
+            return False
+
     def fetch_report_data_from_url(self, report_url: str) -> pd.DataFrame:
         """Fetches data from a specific report URL, trying to find CSV downloads or tables."""
+        if not self.is_logged_in:
+            print("Não logado na Levante Ideias. Por favor, faça login primeiro.")
+            return pd.DataFrame()
+
         print(f"Acessando relatório em: {report_url}")
         soup = self._get_page_content(report_url)
         if not soup:
@@ -47,7 +95,6 @@ class LevanteConnector:
         csv_links = soup.find_all('a', href=re.compile(r'.*\.csv$'))
         if csv_links:
             print(f"Encontrado(s) {len(csv_links)} link(s) de CSV na página.")
-            # Por simplicidade, vamos tentar baixar o primeiro CSV encontrado
             csv_url = csv_links[0]['href']
             if not csv_url.startswith('http'):
                 csv_url = self.base_url + csv_url # Ajustar para URL absoluta
@@ -66,7 +113,6 @@ class LevanteConnector:
         tables = soup.find_all('table')
         if tables:
             print(f"Encontrado(s) {len(tables)} tabela(s) na página.")
-            # Por simplicidade, vamos tentar ler a primeira tabela como DataFrame
             try:
                 df = pd.read_html(str(tables[0]))[0]
                 print("Dados extraídos da primeira tabela HTML.")
@@ -90,19 +136,22 @@ class LevanteConnector:
 if __name__ == '__main__':
     levante = LevanteConnector()
     # Exemplo de URL de relatório da Levante (substitua por URLs reais)
-    report_urls = [
-        "https://www.levanteideias.com.br/relatorio-exemplo-1", # Substitua por URLs reais
-        "https://www.levanteideias.com.br/relatorio-exemplo-2"
-    ]
+    # if levante.login("recalchi.consultoria@gmail.com", "Gordinez123@"):
+    #     report_urls = [
+    #         "https://www.levanteideias.com.br/relatorio-exemplo-1", # Substitua por URLs reais
+    #         "https://www.levanteideias.com.br/relatorio-exemplo-2"
+    #     ]
 
-    print("\nTentando buscar dados dos relatórios da Levante Ideias:")
-    data_from_reports = levante.fetch_data(report_urls)
+    #     print("\nTentando buscar dados dos relatórios da Levante Ideias:")
+    #     data_from_reports = levante.fetch_data(report_urls)
 
-    for url, df in data_from_reports.items():
-        print(f"\nDados do relatório {url}:")
-        print(df.head())
+    #     for url, df in data_from_reports.items():
+    #         print(f"\nDados do relatório {url}:")
+    #         print(df.head())
 
-    if not data_from_reports:
-        print("Nenhum dado foi coletado dos relatórios da Levante Ideias.")
+    #     if not data_from_reports:
+    #         print("Nenhum dado foi coletado dos relatórios da Levante Ideias.")
+    # else:
+    #     print("Não foi possível fazer login na Levante Ideias.")
 
 
