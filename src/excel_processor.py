@@ -14,18 +14,19 @@ class ExcelProcessor:
             if not os.path.exists(self.file_path):
                 return pd.DataFrame()
             
-            # Use pandas to read the Excel file, which is generally more robust
-            # for inferring headers and data types. By default, it uses the first row as headers.            df = pd.read_excel(self.file_path, sheet_name=sheet_name, engine=\'openpyxl\')
+            df = pd.read_excel(self.file_path, sheet_name=sheet_name, engine="openpyxl")
             
             # Adicionar a coluna RENTABILIDADE_ULT_MES se não existir
-            if 'RENTABILIDADE_ULT_MES' not in df.columns:
-                df['RENTABILIDADE_ULT_MES'] = 0.0  # Valor padrão
+            if "RENTABILIDADE_ULT_MES" not in df.columns:
+                df["RENTABILIDADE_ULT_MES"] = 0.0  # Valor padrão
 
             # Adicionar a coluna DATA ATT se não existir
-            if 'DATA ATT' not in df.columns:
-                df['DATA ATT'] = pd.to_datetime('today').strftime('%Y-%m-%d')
+            if "DATA ATT" not in df.columns:
+                df["DATA ATT"] = pd.to_datetime("today").strftime("%Y-%m-%d")
 
-            return df        except ValueError: # Handles cases where the sheet does not exist
+            return df
+        except ValueError as ve: # Handles cases where the sheet does not exist
+            print(f"Planilha \"{sheet_name}\" não encontrada ou erro de valor: {ve}")
             return pd.DataFrame()
         except Exception as e:
             print(f"Erro inesperado ao ler a planilha '{sheet_name}': {e}")

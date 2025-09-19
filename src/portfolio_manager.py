@@ -20,21 +20,34 @@ class PortfolioManager:
             print("No portfolio positions loaded to update prices.")
             return
 
-        # Merge current prices into portfolio data
-        # Use 'left' merge to keep all portfolio assets, even if no new price is found
-        self.portfolio_data = pd.merge(
-            self.portfolio_data,
-            prices_df[["Ativo", "PrecoAtual"]],
-            on="Ativo",
-            how="left",
-            suffixes=("", "_new")
-        )
-        
-        # Update 'PrecoAtual' column, handling cases where new prices might be missing
-        self.portfolio_data["PrecoAtual"] = self.portfolio_data["PrecoAtual_new"].fillna(self.portfolio_data["PrecoAtual"])
-        self.portfolio_data.drop(columns=["PrecoAtual_new"], inplace=True)
-        
-        print("Portfolio prices updated.")
+        # Ensure 'PrecoAtual' column exists in self.portfolio_data, initialize with None if not present
+        if 'PrecoAtual' not in self.portfolio_data.columns:
+            self.portfolio_data['PrecoAtual'] = None
+
+        if not prices_df.empty:
+            # Merge current prices into portfolio data
+            # Use 'left' merge to keep all portfolio assets, even if no new price is found
+            # The 'PrecoAtual' from prices_df will be 'PrecoAtual_new' after merge
+            merged_df = pd.merge(
+                self.portfolio_data,
+                prices_df[["Ativo", "PrecoAtual"]],
+                on="Ativo",
+                how="left",
+                suffixes=("", "_new")
+            )
+            
+            # Update 'PrecoAtual' column: use 'PrecoAtual_new' if available, otherwise keep existing 'PrecoAtual'
+            self.portfolio_data['PrecoAtual'] = merged_df['PrecoAtual_new'].fillna(self.portfolio_data['PrecoAtual'])
+            
+            # Drop the temporary '_new' column if it exists
+            if 'PrecoAtual_new' in merged_df.columns:
+                merged_df.drop(columns=['PrecoAtual_new'], inplace=True)
+            
+            # Update the portfolio_data with the merged result
+            self.portfolio_data = merged_df
+            print("Portfolio prices updated.")
+        else:
+            print("Nenhum novo preço para atualizar. Mantendo os preços existentes.")
 
     def calculate_current_value(self):
         """Calculates the current market value for each position and total portfolio value.
@@ -45,6 +58,7 @@ class PortfolioManager:
             return
         
         self.portfolio_data["ValorAtual"] = self.portfolio_data["Quantidade"] * self.portfolio_data["PrecoAtual"]
+        self.portfolio_data["ValorInvestido"] = self.portfolio_data["Quantidade"] * self.portfolio_data["PrecoMedio"]
         print("Current values calculated.")
 
     def get_portfolio_summary(self) -> Dict[str, Any]:
