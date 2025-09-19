@@ -70,15 +70,6 @@ if __name__ == '__main__':
                 'Close': [100.0, 101.5]
             })
 
-    class MockNordConnector:
-        def fetch_data(self, query: str) -> pd.DataFrame:
-            print(f"Fetching Nord data for \'{query}\' (Mock)")
-            return pd.DataFrame({
-                'ReportDate': pd.to_datetime(['2023-01-01']),
-                'Company': ['ABC Corp'],
-                'Recommendation': ['Buy']
-            })
-
     # Mock ExcelProcessor for example usage
     class MockExcelProcessor:
         def __init__(self, file_path):
@@ -93,19 +84,16 @@ if __name__ == '__main__':
     mock_excel_processor = MockExcelProcessor('mock_portfolio.xlsx')
     dc = DataCoordinator(excel_processor=mock_excel_processor)
     dc.register_source('yfinance', MockYFinanceConnector())
-    dc.register_source('nord', MockNordConnector())
 
     # Collect data from different sources
     yfinance_data = dc.collect_data('yfinance', ticker='PETR4.SA', start_date='2023-01-01', end_date='2023-01-02')
-    nord_data = dc.collect_data('nord', query='PETR4')
 
     print("\nYFinance Data:")
     print(yfinance_data)
-    print("\nNord Data:")
-    print(nord_data)
+
 
     # Consolidate data (example, usually different types of data are not simply concatenated)
-    consolidated_df = dc.consolidate_data([yfinance_data, nord_data])
+    consolidated_df = dc.consolidate_data([yfinance_data])
     print("\nConsolidated Data (simple concat example):")
     print(consolidated_df)
 

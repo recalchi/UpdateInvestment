@@ -30,12 +30,7 @@ def main():
             "excel_file_path": "portfolio.xlsx",
             "excel_positions_sheet_name": "Posicoes",
 
-            "google_sheets_spreadsheet_name": "MyInvestmentPortfolio", # Placeholder
-            "google_sheets_summary_sheet_name": "Resumo",
-            "google_sheets_details_sheet_name": "Detalhes",
-            "google_sheets_spreadsheet_url": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit", # Placeholder
-            "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN", # Placeholder
-            "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID" # Placeholder
+
         }
         with open(config_path_abs, 'w') as f:
             json.dump(dummy_config, f, indent=4)

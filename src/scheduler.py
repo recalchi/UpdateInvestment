@@ -14,7 +14,9 @@ import json
 import os
 
 from update_portfolio import PortfolioUpdater
-from browser_automation import GoogleSheetsAutomation
+from browser_orchestrator import BrowserOrchestrator
+
+
 
 class PortfolioScheduler:
     def __init__(self, config_file="scheduler_config.json"):
@@ -44,7 +46,8 @@ class PortfolioScheduler:
         
         # Inicializar componentes
         self.portfolio_updater = PortfolioUpdater()
-        self.sheets_automation = GoogleSheetsAutomation(headless=True)
+        self.browser_orchestrator = BrowserOrchestrator(headless=True)
+        
     
     def load_config(self):
         """Carrega configurações do arquivo JSON"""
@@ -116,21 +119,7 @@ class PortfolioScheduler:
                 self.logger.error("Falha na atualização da carteira")
                 return False
             
-            # 2. Sincronizar com Google Sheets
-            self.logger.info("Sincronizando com Google Sheets...")
-            
-            # Ler dados atualizados
-            current_data = self.sheets_automation.read_current_portfolio()
-            
-            if not current_data.empty:
-                # Calcular rentabilidades
-                updated_data = self.sheets_automation.calculate_monthly_returns(current_data)
-                
-                # Atualizar planilha
-                sheets_success = self.sheets_automation.update_portfolio_data(updated_data)
-                
-                if not sheets_success:
-                    self.logger.warning("Falha na sincronização com Google Sheets")
+
             
             # 3. Atualizar timestamps
             end_time = datetime.now()
@@ -159,7 +148,7 @@ class PortfolioScheduler:
         
         finally:
             # Fechar recursos
-            self.sheets_automation.close_driver()
+            self.browser_orchestrator.close_driver()
     
     def calculate_next_execution(self):
         """Calcula a próxima execução baseada na configuração"""
@@ -373,4 +362,7 @@ def run_scheduler_service():
 if __name__ == "__main__":
     # Executar como serviço
     run_scheduler_service()
+
+
+
 

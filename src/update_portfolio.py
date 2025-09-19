@@ -2,8 +2,7 @@ import pandas as pd
 from data_coordinator import DataCoordinator
 from excel_processor import ExcelProcessor
 from yfinance_connector import YFinanceConnector
-from nord_connector import NordConnector
-from levante_connector import LevanteConnector # Importar LevanteConnector
+from browser_orchestrator import BrowserOrchestrator
 from investment_analyzer import InvestmentAnalyzer
 from portfolio_manager import PortfolioManager
 
@@ -16,19 +15,17 @@ class PortfolioUpdater:
         self.config = self._load_config(config_path)
 
         self.excel_processor = ExcelProcessor(self.config['excel_file_path'])
-        self.data_coordinator = DataCoordinator(excel_processor=self.excel_processor) # Pass ExcelProcessor here
+        self.data_coordinator = DataCoordinator(excel_processor=self.excel_processor)
         self.investment_analyzer = InvestmentAnalyzer()
         self.portfolio_manager = PortfolioManager()
 
         # Initialize connectors
         self.yfinance_connector = YFinanceConnector()
-        self.nord_connector = NordConnector()
-        self.levante_connector = LevanteConnector() # Inicializar LevanteConnector
+        self.browser_orchestrator = BrowserOrchestrator(headless=True) # Mudar para False para depuração visual
+
 
         # Register data sources with the coordinator
         self.data_coordinator.register_source('yfinance', self.yfinance_connector)
-        self.data_coordinator.register_source('nord', self.nord_connector)
-        self.data_coordinator.register_source('levante', self.levante_connector) # Registrar LevanteConnector
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         if not os.path.exists(config_path):
@@ -59,55 +56,63 @@ class PortfolioUpdater:
             self.portfolio_manager.update_prices(latest_prices)
             print("Latest prices updated.")
 
-        # 3. Collect data from Nord Research reports
+        # 3. Collect data from Nord Research reports using BrowserOrchestrator
         print("Collecting data from Nord Research reports...")
         nord_credentials = self.config.get("nord_credentials")
         if nord_credentials:
-            if self.nord_connector.login(nord_credentials["email"], nord_credentials["password"]):
-                nord_report_urls = list(self.config.get("nord_report_urls", {}).values())
-                if nord_report_urls:
-                    nord_data = self.data_coordinator.collect_data('nord', urls=nord_report_urls)
+            if self.browser_orchestrator.setup_driver():
+                if self.browser_orchestrator.login_nord(nord_credentials["email"], nord_credentials["password"]):
+                    nord_report_urls = list(self.config.get("nord_report_urls", {}).values())
+                    if nord_report_urls:
+                        nord_data = {}
+                        for url in nord_report_urls:
+                            df = self.browser_orchestrator.extract_nord_data(url)
+                            if not df.empty:
+                                nord_data[url] = df
 
-                    if nord_data:
-                        print(f"Collected data from {len(nord_data)} Nord Research reports.")
-                        # Aqui você precisará adicionar a lógica para processar os DataFrames retornados
-                        # pelo NordConnector e integrá-los à sua planilha ou análise.
-                        # Por exemplo, você pode consolidar todos os DataFrames em um único:
-                        # consolidated_nord_df = pd.concat(nord_data.values(), ignore_index=True)
-                        # E então usar consolidated_nord_df para atualizar sua planilha ou fazer análises.
-                        # Por enquanto, apenas imprimimos as chaves para verificar que os dados foram coletados.
-                        for url, df in nord_data.items():
-                            print(f"  - Report {url} with {len(df)} rows.")
+                        if nord_data:
+                            print(f"Collected data from {len(nord_data)} Nord Research reports.")
+                            for url, df in nord_data.items():
+                                print(f"  - Report {url} with {len(df)} rows.")
+                        else:
+                            print("No data collected from Nord Research reports.")
                     else:
-                        print("No data collected from Nord Research reports.")
+                        print("No Nord Research report URLs configured.")
                 else:
-                    print("No Nord Research report URLs configured.")
+                    print("Não foi possível fazer login na Nord Research. Pulando coleta de dados.")
+                self.browser_orchestrator.close_driver()
             else:
-                print("Não foi possível fazer login na Nord Research. Pulando coleta de dados.")
+                print("Não foi possível inicializar o driver do navegador para Nord Research. Pulando coleta de dados.")
         else:
             print("Credenciais da Nord Research não configuradas. Pulando coleta de dados.")
 
-        # 4. Collect data from Levante Ideias reports
+        # 4. Collect data from Levante Ideias reports using BrowserOrchestrator
         print("Collecting data from Levante Ideias reports...")
         levante_credentials = self.config.get("levante_credentials")
         if levante_credentials:
-            if self.levante_connector.login(levante_credentials["email"], levante_credentials["password"]):
-                # Adicione aqui as URLs dos relatórios da Levante, se houver no config
-                # Por enquanto, deixaremos vazio, pois não há URLs específicas no config ainda.
-                # levante_report_urls = list(self.config.get("levante_report_urls", {}).values())
-                # if levante_report_urls:
-                #     levante_data = self.data_coordinator.collect_data("levante", urls=levante_report_urls)
-                #     if levante_data:
-                #         print(f"Collected data from {len(levante_data)} Levante Ideias reports.")
-                #         for url, df in levante_data.items():
-                #             print(f"  - Report {url} with {len(df)} rows.")
-                #     else:
-                #         print("No data collected from Levante Ideias reports.")
-                # else:
-                #     print("No Levante Ideias report URLs configured.")
-                print("Login na Levante Ideias bem-sucedido. Próximo passo: configurar URLs de relatórios.")
+            if self.browser_orchestrator.setup_driver(): # Re-setup driver for Levante if it was closed after Nord
+                if self.browser_orchestrator.login_levante(levante_credentials["email"], levante_credentials["password"]):
+                    levante_report_urls = list(self.config.get("levante_report_urls", {}).values())
+                    if levante_report_urls:
+                        levante_data = {}
+                        for url in levante_report_urls:
+                            df = self.browser_orchestrator.extract_levante_data(url)
+                            if not df.empty:
+                                levante_data[url] = df
+
+                        if levante_data:
+                            print(f"Collected data from {len(levante_data)} Levante Ideias reports.")
+                            for url, df in levante_data.items():
+                                print(f"  - Report {url} with {len(df)} rows.")
+                        else:
+                            print("No data collected from Levante Ideias reports.")
+                    else:
+                        print("No Levante Ideias report URLs configured.")
+                else:
+                    print("Não foi possível fazer login na Levante Ideias. Pulando coleta de dados.")
+                self.browser_orchestrator.close_driver()
             else:
-                print("Não foi possível fazer login na Levante Ideias. Pulando coleta de dados.")
+                print("Não foi possível inicializar o driver do navegador para Levante Ideias. Pulando coleta de dados.")
         else:
             print("Credenciais da Levante Ideias não configuradas. Pulando coleta de dados.")
 
@@ -120,7 +125,7 @@ class PortfolioUpdater:
 
         # Atualizar DATA ATT na planilha principal
         positions_df["DATA ATT"] = pd.to_datetime("today").strftime("%Y-%m-%d")
-        self.excel_processor.write_sheet(positions_df, self.config["excel_positions_sheet_name"])
+        self.excel_processor.write_sheet(positions_df, self.config['excel_positions_sheet_name'])
         print("DATA ATT atualizada na planilha principal.")
 
         # Criar aba histórica
