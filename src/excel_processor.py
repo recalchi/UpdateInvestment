@@ -11,10 +11,14 @@ class ExcelProcessor:
 
     def read_sheet(self, sheet_name: str) -> pd.DataFrame:
         try:
+            print(f"[ExcelProcessor] Tentando ler o arquivo: {self.file_path}, planilha: {sheet_name}")
             if not os.path.exists(self.file_path):
+                print(f"[ExcelProcessor] Erro: Arquivo não encontrado em {self.file_path}")
                 return pd.DataFrame()
             
             df = pd.read_excel(self.file_path, sheet_name=sheet_name, engine="openpyxl")
+            print(f"[ExcelProcessor] DataFrame lido com {len(df)} linhas e {len(df.columns)} colunas.")
+            print(f"[ExcelProcessor] Colunas: {df.columns.tolist()}")
             
             # Adicionar a coluna RENTABILIDADE_ULT_MES se não existir
             if "RENTABILIDADE_ULT_MES" not in df.columns:
