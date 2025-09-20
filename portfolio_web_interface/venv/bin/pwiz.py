@@ -1,4 +1,4 @@
-#!/home/ubuntu/UpdateInvestment/portfolio_web_interface/venv/bin/python3.11
+#!/home/ubuntu/UpdateInvestment/portfolio_web_interface/venv/bin/python3
 
 import datetime
 import os

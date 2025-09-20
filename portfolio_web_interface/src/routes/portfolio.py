@@ -136,20 +136,48 @@ def get_portfolio():
             })
         
         # Converter DataFrame para lista de dicionários
-        portfolio_data = positions_df.to_dict('records')
+        portfolio_data = positions_df.to_dict("records")
         
         return jsonify({
-            'status': 'success',
-            'data': portfolio_data,
-            'total_positions': len(portfolio_data)
+            "status": "success",
+            "data": portfolio_data,
+            "total_positions": len(portfolio_data)
         })
     except Exception as e:
         return jsonify({
-            'status': 'error',
-            'message': str(e)
+            "status": "error",
+            "message": f"Erro ao obter dados do portfólio: {str(e)}"
         }), 500
 
-@portfolio_bp.route('/test-nord', methods=['POST'])
+@portfolio_bp.route("/test-excel", methods=["GET"])
+def test_excel_connection():
+    """Testa a leitura da planilha Excel configurada."""
+    try:
+        updater = get_portfolio_updater()
+        excel_processor = ExcelProcessor(updater.config["excel_file_path"])
+        sheet_name = updater.config["excel_positions_sheet_name"]
+        
+        df = excel_processor.read_sheet(sheet_name)
+        
+        if df.empty:
+            return jsonify({
+                "status": "error",
+                "message": f"A planilha \'{sheet_name}\' está vazia ou não pôde ser lida. Verifique o caminho e o nome da planilha."
+            }), 400
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Planilha \'{sheet_name}\' lida com sucesso!",
+            "preview": df.head().to_dict("records"), # Retorna as 5 primeiras linhas para prévia
+            "columns": df.columns.tolist()
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Erro ao testar a planilha Excel: {str(e)}"
+        }), 500
+
+@portfolio_bp.route("/test-nord", methods=["POST"])
 def test_nord_connection():
     """Testa a conexão com Nord Research."""
     try:

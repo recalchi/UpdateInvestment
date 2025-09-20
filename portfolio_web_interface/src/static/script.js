@@ -22,7 +22,8 @@ const elements = {
     cancelConfigBtn: document.getElementById('cancel-config'),
     saveConfigBtn: document.getElementById('save-config'),
     testNordBtn: document.getElementById('test-nord-btn'),
-    testLevanteBtn: document.getElementById('test-levante-btn'),
+    testLevanteBtn: document.getElementById("test-levante-btn"),
+    testExcelBtn: document.getElementById("test-excel-btn"),
     
     // Loading indicators
     updateLoading: document.getElementById('update-loading'),
@@ -338,21 +339,43 @@ function hideConfigModal() {
     elements.configModal.classList.add('hidden');
 }
 
+async function testExcelConnection() {
+    elements.testExcelBtn.disabled = true;
+    elements.testExcelBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Testando...';
+
+    try {
+        const response = await apiCall('/test-excel');
+        if (response.status === 'success') {
+            showToast(`Planilha lida com sucesso! Colunas: ${response.columns.join(', ')}`, 'success');
+            console.log("Prévia da planilha:", response.preview);
+        } else {
+            showToast(`Erro ao ler planilha: ${response.message}`, 'error');
+        }
+    } catch (error) {
+        console.error('Failed to test Excel connection:', error);
+        showToast(`Erro ao testar planilha: ${error.message}`, 'error');
+    } finally {
+        elements.testExcelBtn.disabled = false;
+        elements.testExcelBtn.innerHTML = '<i class="fas fa-file-excel mr-1"></i>Testar Planilha';
+    }
+}
+
 function saveConfig() {
     // In a real implementation, you would save the configuration
-    showToast('Configurações salvas com sucesso!', 'success');
+    showToast("Configurações salvas com sucesso!", "success");
     hideConfigModal();
 }
 
 // Event Listeners
-elements.updatePortfolioBtn.addEventListener('click', updatePortfolio);
-elements.testConnectionsBtn.addEventListener('click', testConnections);
-elements.viewConfigBtn.addEventListener('click', showConfigModal);
-elements.closeModalBtn.addEventListener('click', hideConfigModal);
-elements.cancelConfigBtn.addEventListener('click', hideConfigModal);
-elements.saveConfigBtn.addEventListener('click', saveConfig);
-elements.testNordBtn.addEventListener('click', testNordConnection);
-elements.testLevanteBtn.addEventListener('click', testLevanteConnection);
+elements.updatePortfolioBtn.addEventListener("click", updatePortfolio);
+elements.testConnectionsBtn.addEventListener("click", testConnections);
+elements.viewConfigBtn.addEventListener("click", showConfigModal);
+elements.closeModalBtn.addEventListener("click", hideConfigModal);
+elements.cancelConfigBtn.addEventListener("click", hideConfigModal);
+elements.saveConfigBtn.addEventListener("click", saveConfig);
+elements.testNordBtn.addEventListener("click", testNordConnection);
+elements.testLevanteBtn.addEventListener("click", testLevanteConnection);
+elements.testExcelBtn.addEventListener("click", testExcelConnection);
 
 // Close modal when clicking outside
 elements.configModal.addEventListener('click', (e) => {
