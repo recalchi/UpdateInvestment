@@ -62,8 +62,8 @@ class ExcelProcessor:
             "TICKER": "TICKER",
             "PESO": "PESO",
             "DY": "DY",
+            "PRECO_MAX": "ATÉ QUE PREÇO COMPRAR",  # <-- NOVO
             "ULTIMA_ATT": "DATA ATT",
-            "DATA_ATT": "DATA ATT",
             "RENTABILIDADE_ULT_MES": "RENTABILIDADE_ULT_MES",
             "RENTABILIDADE_ANUAL": "RENTABILIDADE_ANUAL"
         }
@@ -136,6 +136,8 @@ class ExcelProcessor:
             self._cache_mtime = self._file_mtime()
             self._last_cache_time = time.time()
 
+            # antes de retornar df
+            df = df.where(pd.notnull(df), None)
             return df
 
         except Exception as e:
@@ -198,3 +200,5 @@ class ExcelProcessor:
             print(f"Aba histórica '{sheet_name}' criada com sucesso.")
         except Exception as e:
             print(f"Erro ao criar aba histórica: {e}")
+
+

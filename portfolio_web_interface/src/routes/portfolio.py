@@ -22,28 +22,16 @@ except Exception:
         from utils.serialize import df_to_safe_records
     except Exception:
         # fallback: função minimal (não ideal — só para evitar crash se util não existir)
+        import numpy as notnull
+# fallback: função minimal (não ideal — só para evitar crash se util não existir)
         import pandas as _pd
-        import numpy as _np
+
         def df_to_safe_records(df):
             if df is None or df.empty:
                 return []
-            df2 = df.where(_pd.notnull(df), None)
-            recs = []
-            for r in df2.to_dict("records"):
-                rr = {}
-                for k, v in r.items():
-                    if v is None:
-                        rr[k] = None
-                    else:
-                        try:
-                            if hasattr(v, "item"):
-                                rr[k] = v.item()
-                            else:
-                                rr[k] = v
-                        except Exception:
-                            rr[k] = str(v)
-                recs.append(rr)
-            return recs
+            # Trocar NaN / NaT por None para JSON válido
+            return df.where(_pd.notnull(df), None).to_dict(orient="records")
+
         logger.warning("df_to_safe_records fallback in use. Install src.utils.serialize for full behaviour.")
 
 # Importar classes do package src (com fallback)
@@ -268,6 +256,7 @@ def get_portfolio():
             "status": "error",
             "message": f"Erro ao obter dados do portfólio: {str(e)}"
         }), 500
+
 
 @portfolio_bp.route("/test-excel", methods=["GET"])
 def test_excel_connection():

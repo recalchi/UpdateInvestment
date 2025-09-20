@@ -1,5 +1,5 @@
 {
-  "excel_file_path": "/home/ubuntu/UpdateInvestment/portfolio.xlsx",
+  "excel_file_path": "C:\\UpdateInvestment\\portfolio.xlsx",
   "excel_positions_sheet_name": "BASE",
   "nord_report_urls": {
     "dividendos": "https://members.nordinvestimentos.com.br/conteudo/41-dividendos-o-que-comprar-",
