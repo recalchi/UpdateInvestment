@@ -55,7 +55,23 @@ def get_config():
             'message': str(e)
         }), 500
 
-@portfolio_bp.route('/config', methods=['POST'])
+@portfolio_bp.route("/last-update-time", methods=["GET"])
+def get_last_update_time():
+    """Retorna a data e hora da última atualização do portfólio."""
+    try:
+        updater = get_portfolio_updater()
+        last_update_time = updater.config.get("last_update_timestamp", "N/A")
+        return jsonify({
+            "status": "success",
+            "last_update_time": last_update_time
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+@portfolio_bp.route("/config", methods=["POST"])
 def update_config():
     """Atualiza a configuração do sistema."""
     try:
@@ -70,13 +86,13 @@ def update_config():
         # Salvar configuração (implementar persistência se necessário)
         
         return jsonify({
-            'status': 'success',
-            'message': 'Configuração atualizada com sucesso'
+            "status": "success",
+            "message": "Configuração atualizada com sucesso"
         })
     except Exception as e:
         return jsonify({
-            'status': 'error',
-            'message': str(e)
+            "status": "error",
+            "message": str(e)
         }), 500
 
 @portfolio_bp.route('/update', methods=['POST'])

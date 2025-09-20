@@ -12,7 +12,9 @@ from typing import Dict, Any
 
 class PortfolioUpdater:
     def __init__(self, config_path: str = 'config/config.json'):
+        self.config_path = config_path
         self.config = self._load_config(config_path)
+
 
         self.excel_processor = ExcelProcessor(self.config['excel_file_path'])
         self.data_coordinator = DataCoordinator(excel_processor=self.excel_processor)
@@ -32,6 +34,11 @@ class PortfolioUpdater:
             raise FileNotFoundError(f"Configuration file not found at {config_path}")
         with open(config_path, 'r') as f:
             return json.load(f)
+
+    def _save_config(self):
+        with open(self.config_path, 'w') as f:
+            json.dump(self.config, f, indent=4)
+
 
     def run_update(self):
         print("Starting portfolio update process...")
@@ -132,6 +139,8 @@ class PortfolioUpdater:
         self.excel_processor.create_historical_sheet(portfolio_data_with_values)
         print("Aba histórica criada.")
 
+        self.config["last_update_timestamp"] = pd.Timestamp.now().isoformat()
+        self._save_config()
         print("Portfolio update process completed successfully.")
 
 

@@ -139,15 +139,12 @@ async function loadPortfolioData() {
         // Update dashboard cards
         elements.totalPositions.textContent = portfolioData.length;
         
-        // Find the most recent update date
-        const dates = portfolioData
-            .map(item => item['DATA ATT'])
-            .filter(date => date)
-            .sort()
-            .reverse();
-        
-        if (dates.length > 0) {
-            elements.lastUpdate.textContent = formatDate(dates[0]);
+        // Fetch last update time from backend
+        const lastUpdateTimeResponse = await apiCall("/last-update-time");
+        if (lastUpdateTimeResponse.status === "success") {
+            elements.lastUpdate.textContent = formatDate(lastUpdateTimeResponse.last_update_time);
+        } else {
+            elements.lastUpdate.textContent = "N/A";
         }
         
         // Update table
