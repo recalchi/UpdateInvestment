@@ -17,8 +17,16 @@ class ExcelProcessor:
                 return pd.DataFrame()
             
             df = pd.read_excel(self.file_path, sheet_name=sheet_name, engine="openpyxl")
-            print(f"[ExcelProcessor] DataFrame lido com {len(df)} linhas e {len(df.columns)} colunas.")
-            print(f"[ExcelProcessor] Colunas: {df.columns.tolist()}")
+            print(f"[ExcelProcessor] DataFrame lido com {len(df)} linhas e {len(df.columns)} colunas antes da normalização.")
+            
+            # Normalizar nomes das colunas
+            df.columns = df.columns.str.strip().str.replace(" ", "_").str.upper()
+            print(f"[ExcelProcessor] Colunas após normalização: {df.columns.tolist()}")
+
+            # Verificar se a coluna 'ATIVO' existe
+            if "ATIVO" not in df.columns:
+                print(f"[ExcelProcessor] Erro: Coluna 'ATIVO' não encontrada na planilha {sheet_name}. Colunas disponíveis: {df.columns.tolist()}")
+                return pd.DataFrame()
             
             # Adicionar a coluna RENTABILIDADE_ULT_MES se não existir
             if "RENTABILIDADE_ULT_MES" not in df.columns:

@@ -33,7 +33,8 @@ const elements = {
     nordEmail: document.getElementById('nord-email'),
     nordPassword: document.getElementById('nord-password'),
     levanteEmail: document.getElementById('levante-email'),
-    levantePassword: document.getElementById('levante-password')
+    levantePassword: document.getElementById("levante-password"),
+    logPanel: document.getElementById("log-panel")
 };
 
 // Utility Functions
@@ -67,11 +68,36 @@ function showToast(message, type = 'success') {
 }
 
 function showLoading(element) {
-    element.classList.add('show');
+    element.classList.add("show");
 }
 
 function hideLoading(element) {
-    element.classList.remove('show');
+    element.classList.remove("show");
+}
+
+function appendLog(message, type = "info") {
+    const logEntry = document.createElement("div");
+    logEntry.classList.add("mb-1");
+    let icon = "";
+    let textColor = "text-gray-300";
+
+    if (type === "success") {
+        icon = "<i class=\"fas fa-check-circle mr-2\"></i>";
+        textColor = "text-green-400";
+    } else if (type === "error") {
+        icon = "<i class=\"fas fa-times-circle mr-2\"></i>";
+        textColor = "text-red-400";
+    } else if (type === "warning") {
+        icon = "<i class=\"fas fa-exclamation-triangle mr-2\"></i>";
+        textColor = "text-yellow-400";
+    } else if (type === "info") {
+        icon = "<i class=\"fas fa-info-circle mr-2\"></i>";
+        textColor = "text-blue-400";
+    }
+
+    logEntry.innerHTML = `<span class="${textColor}">${icon}${message}</span>`;
+    elements.logPanel.appendChild(logEntry);
+    elements.logPanel.scrollTop = elements.logPanel.scrollHeight;
 }
 
 function formatCurrency(value) {
@@ -114,9 +140,11 @@ async function apiCall(endpoint, options = {}) {
             throw new Error(data.message || `HTTP error! status: ${response.status}`);
         }
         
+        appendLog(`API call to ${endpoint} successful.`, "success");
         return data;
     } catch (error) {
-        console.error('API call failed:', error);
+        console.error("API call failed:", error);
+        appendLog(`API call to ${endpoint} failed: ${error.message}`, "error");
         throw error;
     }
 }
@@ -126,9 +154,11 @@ async function checkSystemStatus() {
         const response = await apiCall('/status');
         elements.statusIndicator.innerHTML = '<i class="fas fa-circle mr-1"></i>Online';
         elements.statusIndicator.className = 'px-3 py-1 rounded-full text-sm bg-green-500';
+        appendLog("Sistema online.", "success");
     } catch (error) {
         elements.statusIndicator.innerHTML = '<i class="fas fa-circle mr-1"></i>Offline';
         elements.statusIndicator.className = 'px-3 py-1 rounded-full text-sm bg-red-500';
+        appendLog("Sistema offline ou erro ao verificar status.", "error");
     }
 }
 
@@ -153,6 +183,7 @@ async function loadPortfolioData() {
         
     } catch (error) {
         console.error('Failed to load portfolio data:', error);
+        appendLog(`Erro ao carregar dados do portfólio: ${error.message}`, "error");
         elements.portfolioTableBody.innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-4 text-center text-red-500">
